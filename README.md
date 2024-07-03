@@ -14,7 +14,7 @@ Installation
 Clone the repository:
 
 ```bash
-git clone https://github.com/XUND/backend-auth-flow-demo.git
+git clone https://github.com/XUND-Solutions-GmbH/backend-auth-flow-demo.git
 cd backend-auth-flow-demo
 ```
 
