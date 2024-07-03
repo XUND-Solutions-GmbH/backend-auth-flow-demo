@@ -6,7 +6,11 @@
   "scripts": {
     "start": "npx tsc && node dist/index.js"
   },
-  "keywords": ["XUND", "backend", "auth"],
+  "keywords": [
+    "XUND",
+    "backend",
+    "auth"
+  ],
   "author": "XUND Solutions GmbH",
   "license": "MIT",
   "dependencies": {
@@ -15,7 +19,7 @@
     "express": "4.19.2"
   },
   "devDependencies": {
-    "@types/express": "4.17.21",
+    "@types/express": "^4.17.21",
     "typescript": "5.5.2"
   }
 }
