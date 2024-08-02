@@ -14,7 +14,10 @@ app.get("/redirect", async (req, res) => {
 
 app.get("/", async (req, res) => {
   // Step 1: Call /authorize endpoint
-  const authorizeURL_authCode = `${process.env.XUND_AUTH_BASE_URL}/authorize?clientId=${process.env.XUND_AUTH_CLIENT_ID}`;
+  let authorizeURL_authCode = `${process.env.XUND_AUTH_BASE_URL}/authorize?clientId=${process.env.XUND_AUTH_CLIENT_ID}`;
+  if (process.env.AUTH_CODE) {
+    authorizeURL_authCode += `&authCode=${process.env.AUTH_CODE}`;
+  }
   const authorizeResponse_authCode = await axios.get<{ authCode: string }>(authorizeURL_authCode);
 
   const authCode = authorizeResponse_authCode.data.authCode;
