@@ -12,6 +12,29 @@ app.get("/redirect", async (req, res) => {
 });
 
 app.get("/", async (req, res) => {
+  // Step 1: Call /authorize endpoint
+  const authorizeURL_authCode = `${process.env.XUND_AUTH_BASE_URL}/authorize?clientId=${process.env.XUND_AUTH_CLIENT_ID}`;
+  const authorizeResponse_authCode = await axios.get<{ authCode: string }>(authorizeURL_authCode);
+
+  const authCode = authorizeResponse_authCode.data.authCode;
+
+    // Step 2: Get JWT access token
+  const tokenURL_authCode = `${process.env.XUND_AUTH_BASE_URL}/token?clientId=${process.env.XUND_AUTH_CLIENT_ID}&authCode=${authCode}`;
+  const tokenResponse_authCode = await axios.get<{ access_token: string }>(tokenURL_authCode, {
+    headers: { "api-key": process.env.XUND_AUTH_API_KEY },
+  });
+
+
+  // Step 3: Use XUND API
+  const xundApiURL_authCode = `${process.env.XUND_API_BASE_URL}/v1/imprintResources`;
+  const xundApiRes_authCode = await axios.get(xundApiURL_authCode, {
+    headers: {
+      authorization: `Bearer ${tokenResponse_authCode.data.access_token}`,
+      language: "en",
+    },
+  });
+
+
     // The /authorize endpoint just checks the clientId and the origin if given and returns 200
   const authorizeURL = `${process.env.XUND_AUTH_BASE_URL}/authorize?clientId=${process.env.XUND_AUTH_CLIENT_ID}`;
   try {
@@ -74,12 +97,21 @@ app.get("/", async (req, res) => {
   }
 
   const response = {
-    access_token: tokenResponse.data.access_token,
-    token_type: tokenResponse.data.token_type,
-    access_token_apiKey: tokenResponse_apiKey.data.access_token,
-    token_type_apiKey: tokenResponse_apiKey.data.token_type,
-    xund_api_response: xundApiRes?.data,
-    xund_api_response_apiKey: xundApiRes_apiKey?.data,
+    clientCredentials: {
+      access_token: tokenResponse.data.access_token,
+      token_type: tokenResponse.data.token_type,
+      xund_api_response: xundApiRes?.data,
+    },
+    apiKey: {
+      access_token: tokenResponse_apiKey.data.access_token,
+      token_type: tokenResponse_apiKey.data.token_type,
+      xund_api_response: xundApiRes_apiKey?.data,
+    },
+    authCode: {
+      access_token: tokenResponse_authCode.data.access_token,
+      token_type: "Bearer",
+      xund_api_response: xundApiRes_authCode?.data,
+    },
   };
   res.send(response);
 });
