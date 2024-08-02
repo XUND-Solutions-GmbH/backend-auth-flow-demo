@@ -8,6 +8,7 @@ const app = express();
 const port = process.env.PORT || 8000;
 
 app.get("/redirect", async (req, res) => {
+  console.log('redirect called!');
   res.end()
 });
 
