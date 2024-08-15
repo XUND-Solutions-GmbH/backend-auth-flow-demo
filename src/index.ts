@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import axios, { isAxiosError } from "axios";
 
+const STATE = 'cd1f934d-6d68-4888-853e-78993bd28e41';
+
 dotenv.config();
 
 const app = express();
@@ -14,18 +16,20 @@ app.get("/redirect", async (req, res) => {
 
 app.get("/", async (req, res) => {
   // Step 1: Call /authorize endpoint
-  let authorizeURL_authCode = `${process.env.XUND_AUTH_BASE_URL}/authorize?clientId=${process.env.XUND_AUTH_CLIENT_ID}`;
+  let authorizeURL_authCode = `${process.env.XUND_AUTH_BASE_URL}/authorize?clientId=${process.env.XUND_AUTH_CLIENT_ID}&scope=state&state=${STATE}`;
   if (process.env.AUTH_CODE) {
     authorizeURL_authCode += `&authCode=${process.env.AUTH_CODE}`;
   }
-  const authorizeResponse_authCode = await axios.get<{ authCode: string }>(authorizeURL_authCode, {
+  const authorizeResponse_authCode = await axios.get<{ authCode: string, state: string }>(authorizeURL_authCode, {
     headers: {
       origin: 'http://localhost:8000',
     }
   });
 
   console.log(`authCode authorize status: ${authorizeResponse_authCode.status}`);
+  console.log(`authCode authorize res data: ${JSON.stringify(authorizeResponse_authCode.data,null,2)}`);
   const authCode = authorizeResponse_authCode.data.authCode;
+  const state_authCode = authorizeResponse_authCode.data.state;
 
     // Step 2: Get JWT access token
   const tokenURL_authCode = `${process.env.XUND_AUTH_BASE_URL}/token?clientId=${process.env.XUND_AUTH_CLIENT_ID}&authCode=${authCode}&redirectUri=${process.env.XUND_AUTH_REDIRECT_URI}`;
@@ -34,7 +38,8 @@ app.get("/", async (req, res) => {
   const token = tokenResponse_authCode.request.res.responseUrl.match(/\/#([^&]+)/)[1];
 
   if (token) {
-    console.log('authCode auth passed');
+    console.log(`authCode token status: ${tokenResponse_authCode.status}`);
+    console.log(`authCode token data: ${token}`);
   }
 
 
@@ -51,14 +56,18 @@ app.get("/", async (req, res) => {
 
     // The /authorize endpoint just checks the clientId and the origin if given and returns 200
   const authorizeURL = `${process.env.XUND_AUTH_BASE_URL}/authorize?clientId=${process.env.XUND_AUTH_CLIENT_ID}`;
+  let authCode_noState;
   try {
     const authorizeResponse = await axios.get(authorizeURL, {
-    headers: {
-      origin: 'http://localhost:8000',
-    }
-  });
+      headers: {
+        origin: 'http://localhost:8000',
+      }
+    });
 
-    console.log(`clientSecret authorize status: ${authorizeResponse.status}`);
+    console.log(`noState authorize status: ${authorizeResponse.status}`);
+    console.log(`noState authorize res data: ${JSON.stringify(authorizeResponse.data,null,2)}`);
+    authCode_noState = authorizeResponse_authCode.data.authCode;
+    console.log(authCode_noState);
   }
   catch (err) {
     if (isAxiosError(err)) {
@@ -68,12 +77,26 @@ app.get("/", async (req, res) => {
     }
   }
 
+    // Step 2: Get JWT access token
+  //const tokenURL_authCode_noState = `${process.env.XUND_AUTH_BASE_URL}/token?clientId=${process.env.XUND_AUTH_CLIENT_ID}&authCode=${authCode_noState}&redirectUri=${process.env.XUND_AUTH_REDIRECT_URI}`;
+  //const tokenResponse_authCode_noState = await axios.get<{ accessToken: string }>(tokenURL_authCode_noState );
+
+  //const token_noState = tokenResponse_authCode_noState.request.res.responseUrl.match(/\/#([^&]+)/)[1];
+
+  //if (token_noState) {
+  //  console.log(`noState token status: ${tokenResponse_authCode_noState.status}`);
+  //  console.log(`noState token data: ${token_noState}`);
+  //}
 
     // Get JWT access token with POST clientId and clientSecret (we use the api-key as clientSecret)
-  const tokenURL_POST = `${process.env.XUND_AUTH_BASE_URL}/token?clientId=${process.env.XUND_AUTH_CLIENT_ID}&clientSecret=${process.env.XUND_AUTH_API_KEY}&grant_type=client_credentials`;
-  const tokenResponse_POST = await axios.post<{ access_token: string, token_type: string }>(tokenURL_POST);
+  const tokenURL_POST = `${process.env.XUND_AUTH_BASE_URL}/token?grant_type=client_credentials&scope=state&state=${STATE}`;
+  const tokenResponse_POST = await axios.post<{ access_token: string, token_type: string }>(tokenURL_POST, {
+    clientId: process.env.XUND_AUTH_CLIENT_ID,
+    clientSecret: process.env.XUND_AUTH_API_KEY,
+  });
 
-  console.log('clientSecret auth passed');
+    console.log(`clientSecret token status: ${tokenResponse_POST.status}`);
+    console.log(`clientSecret token res data: ${JSON.stringify(tokenResponse_POST.data,null,2)}`);
 
     // Use XUND API with the token
   const xundApiURL = `${process.env.XUND_API_BASE_URL}/v1/imprintResources`;
@@ -123,7 +146,8 @@ app.get("/", async (req, res) => {
       xund_api_response: xundApiRes_apiKey?.data,
     },
     authCode: {
-      accessToken: tokenResponse_authCode.data.accessToken,
+      accessToken: token,
+      state: state_authCode,
       token_type: "Bearer",
       xund_api_response: xundApiRes_authCode?.data,
     },
