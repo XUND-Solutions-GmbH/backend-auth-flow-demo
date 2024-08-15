@@ -55,7 +55,7 @@ app.get("/", async (req, res) => {
 
 
     // The /authorize endpoint just checks the clientId and the origin if given and returns 200
-  const authorizeURL = `${process.env.XUND_AUTH_BASE_URL}/authorize?clientId=${process.env.XUND_AUTH_CLIENT_ID}`;
+  const authorizeURL = `${process.env.XUND_AUTH_BASE_URL}/authorize?clientId=${process.env.XUND_AUTH_CLIENT_ID}&authCode=${process.env.AUTH_CODE}`;
   let authCode_noState;
   try {
     const authorizeResponse = await axios.get(authorizeURL, {
@@ -78,15 +78,15 @@ app.get("/", async (req, res) => {
   }
 
     // Step 2: Get JWT access token
-  //const tokenURL_authCode_noState = `${process.env.XUND_AUTH_BASE_URL}/token?clientId=${process.env.XUND_AUTH_CLIENT_ID}&authCode=${authCode_noState}&redirectUri=${process.env.XUND_AUTH_REDIRECT_URI}`;
-  //const tokenResponse_authCode_noState = await axios.get<{ accessToken: string }>(tokenURL_authCode_noState );
+  const tokenURL_authCode_noState = `${process.env.XUND_AUTH_BASE_URL}/token?clientId=${process.env.XUND_AUTH_CLIENT_ID}&authCode=${authCode_noState}&redirectUri=${process.env.XUND_AUTH_REDIRECT_URI}`;
+  const tokenResponse_authCode_noState = await axios.get<{ accessToken: string }>(tokenURL_authCode_noState );
 
-  //const token_noState = tokenResponse_authCode_noState.request.res.responseUrl.match(/\/#([^&]+)/)[1];
+  const token_noState = tokenResponse_authCode_noState.request.res.responseUrl.match(/\/#([^&]+)/)[1];
 
-  //if (token_noState) {
-  //  console.log(`noState token status: ${tokenResponse_authCode_noState.status}`);
-  //  console.log(`noState token data: ${token_noState}`);
-  //}
+  if (token_noState) {
+    console.log(`noState token status: ${tokenResponse_authCode_noState.status}`);
+    console.log(`noState token data: ${token_noState}`);
+  }
 
     // Get JWT access token with POST clientId and clientSecret (we use the api-key as clientSecret)
   const tokenURL_POST = `${process.env.XUND_AUTH_BASE_URL}/token?grant_type=client_credentials&scope=state&state=${STATE}`;
