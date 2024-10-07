@@ -7,7 +7,6 @@ This project provides a guide on how to utilize the backend authentication flow.
 Before you begin, ensure you have the following prerequisites installed:
 - Node.js (18.14.x)
 - Configured XUND SCIC API Key
-- Redirect endpoint available by XUND auth service
 
 ### Installion
 Installation
@@ -30,7 +29,7 @@ Create a `.env` file in the root directory and add your XUND SCIC API credential
 ### Usage
 
 1. Run the backend application on port 8000 by `npm start` command
-2. Open `http://localhost:8000`
+2. Open `http://localhost:8000/client-credentials` or `http://localhost:8000/authorization-code`
 3. The backend application tries to authenticate and send an example request
 4. If the authentication was successful the backend sends the following response:
 
